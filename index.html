@@ -527,269 +527,309 @@
 
   <!-- API YouTube IFrame -->
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script>
-    // 🔧 LE TUE PLAYLIST
-    const PLAYLISTS = [
-      {
-        id: "PLKR0ZRenRrdzHodMKBL46T7xtbuT6MSrX",
-        name: "AI Radio – Romantic"
-      },
-      {
-        id: "PLKR0ZRenRrdwsxChStGPfp5vaXCUGDcWa",
-        name: "AI Radio – Dance"
-      },
-      {
-        id: "PLKR0ZRenRrdzGcAEuqbAj4oVoPub6n89l",
-        name: "AI Radio – Pop/Rock"
-      },
-      {
-        id: "PLKR0ZRenRrdzhW0pzppxVV1r3lnpN-7Ml",
-        name: "AI Radio – Best of"
-      },
-      {
-        id: "PLKR0ZRenRrdw9_2GLQFNwDHf3vLrLfc2N",
-        name: "AI Radio – Funny"
-      }
-    ];
-
-    let player = null;
-    let isReady = false;
-    let isPlaying = false;
-    let currentPlaylistId = PLAYLISTS[0].id;
-
-    const playBtn = document.getElementById("play-btn");
-    const prevBtn = document.getElementById("prev-btn");
-    const nextBtn = document.getElementById("next-btn");
-    const muteBtn = document.getElementById("mute-btn");
-    const volumeSlider = document.getElementById("volume-slider");
-
-    const playIcon = document.getElementById("play-icon");
-    const pauseIcon = document.getElementById("pause-icon");
-    const volumeOnIcon = document.getElementById("volume-on-icon");
-    const volumeOffIcon = document.getElementById("volume-off-icon");
-
-    const trackTitleEl = document.getElementById("track-title");
-    const trackPositionEl = document.getElementById("track-position");
-    const statusDotEl = document.getElementById("status-dot");
-    const statusTextEl = document.getElementById("status-text");
-    const hintTextEl = document.getElementById("hint-text");
-    const playlistLabelEl = document.getElementById("playlist-label");
-    const playlistSelect = document.getElementById("playlist-select");
-
-    function setControlsEnabled(enabled) {
-      playBtn.disabled = !enabled;
-      prevBtn.disabled = !enabled;
-      nextBtn.disabled = !enabled;
-      muteBtn.disabled = !enabled;
-      volumeSlider.disabled = !enabled;
+<script>
+  // 🔧 LE TUE PLAYLIST
+  const PLAYLISTS = [
+    {
+      id: "PLKR0ZRenRrdzHodMKBL46T7xtbuT6MSrX",
+      name: "AI Radio – Romantic"
+    },
+    {
+      id: "PLKR0ZRenRrdwsxChStGPfp5vaXCUGDcWa",
+      name: "AI Radio – Dance"
+    },
+    {
+      id: "PLKR0ZRenRrdzGcAEuqbAj4oVoPub6n89l",
+      name: "AI Radio – Pop/Rock"
+    },
+    {
+      id: "PLKR0ZRenRrdzhW0pzppxVV1r3lnpN-7Ml",
+      name: "AI Radio – Best of"
+    },
+    {
+      id: "PLKR0ZRenRrdw9_2GLQFNwDHf3vLrLfc2N",
+      name: "AI Radio – Funny"
     }
+  ];
 
-    function setStatus(text, isNowPlaying) {
-      statusTextEl.textContent = text;
-      if (typeof isNowPlaying === "boolean") {
-        if (isNowPlaying) {
-          statusDotEl.classList.add("playing");
-        } else {
-          statusDotEl.classList.remove("playing");
-        }
-      }
+  let player = null;
+  let isReady = false;
+  let isPlaying = false;
+  let currentPlaylistId = PLAYLISTS[0].id;
+
+  const playBtn = document.getElementById("play-btn");
+  const prevBtn = document.getElementById("prev-btn");
+  const nextBtn = document.getElementById("next-btn");
+  const muteBtn = document.getElementById("mute-btn");
+  const volumeSlider = document.getElementById("volume-slider");
+
+  const playIcon = document.getElementById("play-icon");
+  const pauseIcon = document.getElementById("pause-icon");
+  const volumeOnIcon = document.getElementById("volume-on-icon");
+  const volumeOffIcon = document.getElementById("volume-off-icon");
+
+  const trackTitleEl = document.getElementById("track-title");
+  const trackPositionEl = document.getElementById("track-position");
+  const statusDotEl = document.getElementById("status-dot");
+  const statusTextEl = document.getElementById("status-text");
+  const hintTextEl = document.getElementById("hint-text");
+  const playlistLabelEl = document.getElementById("playlist-label");
+  const playlistSelect = document.getElementById("playlist-select");
+
+  // 🔤 PULISCE IL TITOLO: taglia tutto dopo il primo "#"
+  function cleanTitle(raw) {
+    if (!raw) return "";
+    const hashIndex = raw.indexOf("#");
+    if (hashIndex !== -1) {
+      return raw.slice(0, hashIndex).trim();
     }
+    return raw.trim();
+  }
 
-    function updateTrackInfo() {
-      if (!player || !isReady) return;
-      const data = player.getVideoData();
-      const title = data && data.title ? data.title : "Traccia sconosciuta";
+  function setControlsEnabled(enabled) {
+    playBtn.disabled = !enabled;
+    prevBtn.disabled = !enabled;
+    nextBtn.disabled = !enabled;
+    muteBtn.disabled = !enabled;
+    volumeSlider.disabled = !enabled;
+  }
 
-      const index = typeof player.getPlaylistIndex === "function"
-        ? player.getPlaylistIndex()
-        : -1;
-
-      const playlist = typeof player.getPlaylist === "function"
-        ? player.getPlaylist()
-        : null;
-
-      const total = Array.isArray(playlist) ? playlist.length : null;
-
-      trackTitleEl.textContent = title;
-      if (index >= 0 && total) {
-        trackPositionEl.textContent = `Traccia ${index + 1} / ${total}`;
-      } else {
-        trackPositionEl.textContent = "Traccia - / -";
-      }
-    }
-
-    function updatePlayPauseUI(isNowPlaying) {
-      isPlaying = isNowPlaying;
+  function setStatus(text, isNowPlaying) {
+    statusTextEl.textContent = text;
+    if (typeof isNowPlaying === "boolean") {
       if (isNowPlaying) {
-        playIcon.style.display = "none";
-        pauseIcon.style.display = "block";
-        setStatus("In riproduzione", true);
-        hintTextEl.textContent = "Suggerimento: usa Next/Prev per cambiare brano";
+        statusDotEl.classList.add("playing");
       } else {
-        playIcon.style.display = "block";
-        pauseIcon.style.display = "none";
-        setStatus("In pausa", false);
-        hintTextEl.textContent = "Premi Play per continuare la radio";
+        statusDotEl.classList.remove("playing");
       }
     }
+  }
 
-    function updateMuteUI() {
-      if (!player) return;
-      const muted = player.isMuted();
-      if (muted) {
-        volumeOnIcon.style.display = "none";
-        volumeOffIcon.style.display = "block";
-        hintTextEl.textContent = "Radio silenziata • Clicca di nuovo per attivare l'audio";
-      } else {
-        volumeOnIcon.style.display = "block";
-        volumeOffIcon.style.display = "none";
-      }
-    }
+  function updateTrackInfo() {
+    if (!player || !isReady) return;
+    const data = player.getVideoData();
+    const rawTitle = data && data.title ? data.title : "Traccia sconosciuta";
+    const title = cleanTitle(rawTitle); // 👈 qui usiamo il titolo pulito
 
-    function changePlaylist(newPlaylistId) {
-      currentPlaylistId = newPlaylistId;
-      const selectedOption = playlistSelect.options[playlistSelect.selectedIndex];
-      playlistLabelEl.textContent = selectedOption ? selectedOption.textContent : "Playlist AI Radio";
+    const index = typeof player.getPlaylistIndex === "function"
+      ? player.getPlaylistIndex()
+      : -1;
 
-      trackTitleEl.textContent = "Caricamento della playlist...";
+    const playlist = typeof player.getPlaylist === "function"
+      ? player.getPlaylist()
+      : null;
+
+    const total = Array.isArray(playlist) ? playlist.length : null;
+
+    trackTitleEl.textContent = title;
+    if (index >= 0 && total) {
+      trackPositionEl.textContent = `Traccia ${index + 1} / ${total}`;
+    } else {
       trackPositionEl.textContent = "Traccia - / -";
-      setStatus("Cambio playlist…", false);
+    }
+  }
 
-      if (player && isReady) {
+  function updatePlayPauseUI(isNowPlaying) {
+    isPlaying = isNowPlaying;
+    if (isNowPlaying) {
+      playIcon.style.display = "none";
+      pauseIcon.style.display = "block";
+      setStatus("In riproduzione", true);
+      hintTextEl.textContent = "Suggerimento: usa Next/Prev per cambiare brano";
+    } else {
+      playIcon.style.display = "block";
+      pauseIcon.style.display = "none";
+      setStatus("In pausa", false);
+      hintTextEl.textContent = "Premi Play per continuare la radio";
+    }
+  }
+
+  function updateMuteUI() {
+    if (!player) return;
+    const muted = player.isMuted();
+    if (muted) {
+      volumeOnIcon.style.display = "none";
+      volumeOffIcon.style.display = "block";
+      hintTextEl.textContent = "Radio silenziata • Clicca di nuovo per attivare l'audio";
+    } else {
+      volumeOnIcon.style.display = "block";
+      volumeOffIcon.style.display = "none";
+    }
+  }
+
+  // Cambio playlist – forcella sempre sulla nuova, dalla traccia 0
+  function changePlaylist(newPlaylistId) {
+    currentPlaylistId = newPlaylistId;
+
+    const selectedOption = playlistSelect.options[playlistSelect.selectedIndex];
+    playlistLabelEl.textContent = selectedOption ? selectedOption.textContent : "Playlist AI Radio";
+
+    trackTitleEl.textContent = "Caricamento della playlist...";
+    trackPositionEl.textContent = "Traccia - / -";
+    setStatus("Cambio playlist…", false);
+
+    if (player && isReady) {
+      try {
+        if (typeof player.setShuffle === "function") player.setShuffle(false);
+        if (typeof player.setLoop === "function") player.setLoop(true);
+
         player.loadPlaylist({
           listType: "playlist",
           list: currentPlaylistId,
           index: 0
         });
-      }
-    }
 
-    // CALLBACK REGISTRATA SU window (più robusto)
-    window.onYouTubeIframeAPIReady = function () {
-      player = new YT.Player("player", {
-        height: "0",
-        width: "0",
-        playerVars: {
-          listType: "playlist",
-          list: currentPlaylistId,
-          autoplay: 0,
-          controls: 0,
-          rel: 0,
-          modestbranding: 1
-        },
-        events: {
-          onReady: onPlayerReady,
-          onStateChange: onPlayerStateChange,
-          onError: onPlayerError
+        if (typeof player.playVideoAt === "function") {
+          player.playVideoAt(0); // 👈 parte subito dalla prima traccia della nuova playlist
         }
-      });
-    };
 
-    function onPlayerReady() {
-      isReady = true;
-      setControlsEnabled(true);
+        setStatus("Playlist caricata…", false);
+      } catch (e) {
+        console.error("Errore cambio playlist:", e);
+        setStatus("Errore nel cambio playlist", false);
+      }
+    }
+  }
+
+  // CALLBACK REGISTRATA SU window
+  window.onYouTubeIframeAPIReady = function () {
+    player = new YT.Player("player", {
+      height: "0",
+      width: "0",
+      playerVars: {
+        listType: "playlist",
+        list: currentPlaylistId,
+        autoplay: 1,   // 👈 chiediamo subito autoplay
+        controls: 0,
+        rel: 0,
+        modestbranding: 1
+      },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
+        onError: onPlayerError
+      }
+    });
+  };
+
+  function onPlayerReady() {
+    isReady = true;
+    setControlsEnabled(true);
+
+    if (typeof player.setShuffle === "function") player.setShuffle(false);
+    if (typeof player.setLoop === "function") player.setLoop(true);
+
+    const vol = parseInt(volumeSlider.value, 10) || 70;
+    player.setVolume(vol);
+
+    // ▶️ AUTOPLAY APPENA LA PAGINA È PRONTA
+    setStatus("Avvio radio…", false);
+    try {
+      player.playVideo();
+    } catch (e) {
+      console.error("Autoplay bloccato dal browser:", e);
       setStatus("Pronto • premi Play per avviare", false);
+    }
+
+    updateTrackInfo();
+  }
+
+  function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING) {
       updateTrackInfo();
-
-      const vol = parseInt(volumeSlider.value, 10) || 70;
-      player.setVolume(vol);
+      updatePlayPauseUI(true);
+    } else if (event.data === YT.PlayerState.PAUSED) {
+      updatePlayPauseUI(false);
+    } else if (event.data === YT.PlayerState.ENDED) {
+      setStatus("Passo alla prossima traccia…", false);
+    } else if (event.data === YT.PlayerState.BUFFERING) {
+      setStatus("Buffering…", isPlaying);
     }
+  }
 
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PLAYING) {
-        updateTrackInfo();
-        updatePlayPauseUI(true);
-      } else if (event.data === YT.PlayerState.PAUSED) {
-        updatePlayPauseUI(false);
-      } else if (event.data === YT.PlayerState.ENDED) {
-        setStatus("Passo alla prossima traccia…", false);
-      } else if (event.data === YT.PlayerState.BUFFERING) {
-        setStatus("Buffering…", isPlaying);
-      }
+  function onPlayerError(event) {
+    console.error("YouTube Player error:", event.data);
+    const selectedOption = playlistSelect.options[playlistSelect.selectedIndex];
+    const plName = selectedOption ? selectedOption.textContent : currentPlaylistId;
+    alert("Errore nella playlist: " + plName + "\nCodice errore: " + event.data);
+    setStatus("Errore di riproduzione", false);
+    hintTextEl.textContent = "Controlla la playlist o ricarica la pagina.";
+    trackTitleEl.textContent = "Impossibile riprodurre questa playlist.";
+  }
+
+  function togglePlayPause() {
+    if (!player || !isReady) return;
+    const state = player.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) {
+      player.pauseVideo();
+    } else {
+      player.playVideo();
     }
+  }
 
-    function onPlayerError(event) {
-      console.error("YouTube Player error:", event.data);
-      const selectedOption = playlistSelect.options[playlistSelect.selectedIndex];
-      const plName = selectedOption ? selectedOption.textContent : currentPlaylistId;
-      alert("Errore nella playlist: " + plName + "\nCodice errore: " + event.data);
-      setStatus("Errore di riproduzione", false);
-      hintTextEl.textContent = "Controlla la playlist o ricarica la pagina.";
-      trackTitleEl.textContent = "Impossibile riprodurre questa playlist.";
+  function nextTrack() {
+    if (!player || !isReady) return;
+    player.nextVideo();
+    setStatus("Caricamento prossima traccia…", false);
+  }
+
+  function prevTrack() {
+    if (!player || !isReady) return;
+    player.previousVideo();
+    setStatus("Caricamento traccia precedente…", false);
+  }
+
+  function toggleMute() {
+    if (!player || !isReady) return;
+    if (player.isMuted()) {
+      player.unMute();
+    } else {
+      player.mute();
     }
+    updateMuteUI();
+  }
 
-    function togglePlayPause() {
-      if (!player || !isReady) return;
-      const state = player.getPlayerState();
-      if (state === YT.PlayerState.PLAYING) {
-        player.pauseVideo();
-      } else {
-        player.playVideo();
-      }
-    }
-
-    function nextTrack() {
-      if (!player || !isReady) return;
-      player.nextVideo();
-      setStatus("Caricamento prossima traccia…", false);
-    }
-
-    function prevTrack() {
-      if (!player || !isReady) return;
-      player.previousVideo();
-      setStatus("Caricamento traccia precedente…", false);
-    }
-
-    function toggleMute() {
-      if (!player || !isReady) return;
-      if (player.isMuted()) {
-        player.unMute();
-      } else {
-        player.mute();
-      }
+  function changeVolume(value) {
+    if (!player || !isReady) return;
+    const vol = parseInt(value, 10);
+    if (Number.isNaN(vol)) return;
+    player.setVolume(vol);
+    if (player.isMuted() && vol > 0) {
+      player.unMute();
       updateMuteUI();
     }
+  }
 
-    function changeVolume(value) {
-      if (!player || !isReady) return;
-      const vol = parseInt(value, 10);
-      if (Number.isNaN(vol)) return;
-      player.setVolume(vol);
-      if (player.isMuted() && vol > 0) {
-        player.unMute();
-        updateMuteUI();
-      }
+  document.addEventListener("DOMContentLoaded", () => {
+    setControlsEnabled(false);
+
+    // Popola il select
+    PLAYLISTS.forEach((pl, index) => {
+      const opt = document.createElement("option");
+      opt.value = pl.id;
+      opt.textContent = pl.name;
+      if (index === 0) opt.selected = true;
+      playlistSelect.appendChild(opt);
+    });
+
+    if (playlistSelect.options.length > 0) {
+      playlistLabelEl.textContent = playlistSelect.options[playlistSelect.selectedIndex].textContent;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      setControlsEnabled(false);
-
-      // Popola il select
-      PLAYLISTS.forEach((pl, index) => {
-        const opt = document.createElement("option");
-        opt.value = pl.id;
-        opt.textContent = pl.name;
-        if (index === 0) opt.selected = true;
-        playlistSelect.appendChild(opt);
-      });
-
-      if (playlistSelect.options.length > 0) {
-        playlistLabelEl.textContent = playlistSelect.options[playlistSelect.selectedIndex].textContent;
-      }
-
-      playlistSelect.addEventListener("change", (e) => {
-        changePlaylist(e.target.value);
-      });
-
-      playBtn.addEventListener("click", togglePlayPause);
-      nextBtn.addEventListener("click", nextTrack);
-      prevBtn.addEventListener("click", prevTrack);
-      muteBtn.addEventListener("click", toggleMute);
-
-      volumeSlider.addEventListener("input", (e) => {
-        changeVolume(e.target.value);
-      });
+    playlistSelect.addEventListener("change", (e) => {
+      changePlaylist(e.target.value);
     });
-  </script>
+
+    playBtn.addEventListener("click", togglePlayPause);
+    nextBtn.addEventListener("click", nextTrack);
+    prevBtn.addEventListener("click", prevTrack);
+    muteBtn.addEventListener("click", toggleMute);
+
+    volumeSlider.addEventListener("input", (e) => {
+      changeVolume(e.target.value);
+    });
+  });
+</script>
+
 </body>
 </html>
