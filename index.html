@@ -459,7 +459,6 @@
         <div class="controls-row">
           <div class="controls-main">
             <button id="prev-btn" class="btn-icon small" title="Traccia precedente" disabled>
-              <!-- Prev icon -->
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor"
                       d="M6 5a1 1 0 0 0-1 1v12a1 1 0 1 0 2 0V6a1 1 0 0 0-1-1zm3.9 7.62 7.14 4.26A1 1 0 0 0 19 16.99V7.01a1 1 0 0 0-1.96-.89L9.9 10.38a1.42 1.42 0 0 0 0 2.24z" />
@@ -467,7 +466,6 @@
             </button>
 
             <button id="play-btn" class="btn-icon primary" title="Play/Pausa" disabled>
-              <!-- Play/Pause icon -->
               <svg id="play-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor"
                       d="M8 5.14v13.72a1 1 0 0 0 1.52.85l9-6.86a1 1 0 0 0 0-1.7l-9-6.86A1 1 0 0 0 8 5.14z" />
@@ -479,7 +477,6 @@
             </button>
 
             <button id="next-btn" class="btn-icon small" title="Traccia successiva" disabled>
-              <!-- Next icon -->
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor"
                       d="M18 19a1 1 0 0 0 1-1V6a1 1 0 1 0-2 0v12a1 1 0 0 0 1 1zm-3.9-6.62-7.14-4.26A1 1 0 0 0 5 7.01v9.98a1 1 0 0 0 1.96.89l7.14-4.26a1.42 1.42 0 0 0 0-2.24z" />
@@ -488,7 +485,6 @@
           </div>
 
           <button id="mute-btn" class="btn-icon small" title="Muto" disabled>
-            <!-- Volume icon -->
             <svg id="volume-on-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor"
                     d="M5 9v6a1 1 0 0 0 1 1h2.76l4.32 3.24A1 1 0 0 0 15 18.4V5.6a1 1 0 0 0-1.92-.84L8.76 8H6a1 1 0 0 0-1 1z" />
@@ -532,27 +528,26 @@
   <!-- API YouTube IFrame -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    // 🔧 ELENCO PLAYLIST DISPONIBILI
-    // Metti qui i tuoi ID e nomi
+    // 🔧 LE TUE PLAYLIST
     const PLAYLISTS = [
       {
-        id: "PLKR0ZRenRrdzHodMKBL46T7xtbuT6MSrX", // la tua playlist attuale
+        id: "PLKR0ZRenRrdzHodMKBL46T7xtbuT6MSrX",
         name: "AI Radio – Romantic"
       },
       {
-        id: "PLKR0ZRenRrdwsxChStGPfp5vaXCUGDcWa", // sostituisci
+        id: "PLKR0ZRenRrdwsxChStGPfp5vaXCUGDcWa",
         name: "AI Radio – Dance"
       },
       {
-        id: "PLKR0ZRenRrdzGcAEuqbAj4oVoPub6n89l", // sostituisci
+        id: "PLKR0ZRenRrdzGcAEuqbAj4oVoPub6n89l",
         name: "AI Radio – Pop/Rock"
       },
       {
-        id: "PLKR0ZRenRrdzhW0pzppxVV1r3lnpN-7Ml", // sostituisci
+        id: "PLKR0ZRenRrdzhW0pzppxVV1r3lnpN-7Ml",
         name: "AI Radio – Best of"
       },
       {
-        id: "PLKR0ZRenRrdw9_2GLQFNwDHf3vLrLfc2N", // sostituisci
+        id: "PLKR0ZRenRrdw9_2GLQFNwDHf3vLrLfc2N",
         name: "AI Radio – Funny"
       }
     ];
@@ -651,10 +646,8 @@
       }
     }
 
-    // Cambio playlist
     function changePlaylist(newPlaylistId) {
       currentPlaylistId = newPlaylistId;
-
       const selectedOption = playlistSelect.options[playlistSelect.selectedIndex];
       playlistLabelEl.textContent = selectedOption ? selectedOption.textContent : "Playlist AI Radio";
 
@@ -671,8 +664,8 @@
       }
     }
 
-    // YouTube API callback
-    function onYouTubeIframeAPIReady() {
+    // CALLBACK REGISTRATA SU window (più robusto)
+    window.onYouTubeIframeAPIReady = function () {
       player = new YT.Player("player", {
         height: "0",
         width: "0",
@@ -690,7 +683,7 @@
           onError: onPlayerError
         }
       });
-    }
+    };
 
     function onPlayerReady() {
       isReady = true;
@@ -717,12 +710,14 @@
 
     function onPlayerError(event) {
       console.error("YouTube Player error:", event.data);
+      const selectedOption = playlistSelect.options[playlistSelect.selectedIndex];
+      const plName = selectedOption ? selectedOption.textContent : currentPlaylistId;
+      alert("Errore nella playlist: " + plName + "\nCodice errore: " + event.data);
       setStatus("Errore di riproduzione", false);
       hintTextEl.textContent = "Controlla la playlist o ricarica la pagina.";
       trackTitleEl.textContent = "Impossibile riprodurre questa playlist.";
     }
 
-    // Controlli
     function togglePlayPause() {
       if (!player || !isReady) return;
       const state = player.getPlayerState();
@@ -766,11 +761,10 @@
       }
     }
 
-    // Init UI + event listeners
     document.addEventListener("DOMContentLoaded", () => {
       setControlsEnabled(false);
 
-      // Popola il select con le playlist
+      // Popola il select
       PLAYLISTS.forEach((pl, index) => {
         const opt = document.createElement("option");
         opt.value = pl.id;
@@ -779,7 +773,6 @@
         playlistSelect.appendChild(opt);
       });
 
-      // Label iniziale
       if (playlistSelect.options.length > 0) {
         playlistLabelEl.textContent = playlistSelect.options[playlistSelect.selectedIndex].textContent;
       }
