@@ -207,6 +207,38 @@
       margin-right: 0;
     }
 
+    /* Playlist selector */
+    .playlist-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .playlist-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .playlist-select {
+      width: 100%;
+      border-radius: 999px;
+      padding: 0.4rem 0.8rem;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text);
+      font-size: 0.8rem;
+      outline: none;
+      appearance: none;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.8);
+    }
+
+    .playlist-select:focus {
+      border-color: rgba(129, 140, 248, 0.9);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.8), 0 16px 30px rgba(15, 23, 42, 0.9);
+    }
+
     /* Controls */
     .controls-row {
       display: flex;
@@ -407,6 +439,12 @@
       </header>
 
       <section class="player-card">
+        <!-- Selettore playlist -->
+        <div class="playlist-row">
+          <div class="playlist-label">Seleziona playlist</div>
+          <select id="playlist-select" class="playlist-select"></select>
+        </div>
+
         <div class="track-info">
           <div class="track-label">In riproduzione</div>
           <div id="track-title" class="track-title">
@@ -494,12 +532,35 @@
   <!-- API YouTube IFrame -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    // 🔧 Configura qui la tua playlist
-    const YT_PLAYLIST_ID = "PLKR0ZRenRrdzHodMKBL46T7xtbuT6MSrX";
+    // 🔧 ELENCO PLAYLIST DISPONIBILI
+    // Metti qui i tuoi ID e nomi
+    const PLAYLISTS = [
+      {
+        id: "PLKR0ZRenRrdzHodMKBL46T7xtbuT6MSrX", // la tua playlist attuale
+        name: "AI Radio – Romantic"
+      },
+      {
+        id: "PLKR0ZRenRrdwsxChStGPfp5vaXCUGDcWa", // sostituisci
+        name: "AI Radio – Dance"
+      },
+      {
+        id: "PLKR0ZRenRrdzGcAEuqbAj4oVoPub6n89l", // sostituisci
+        name: "AI Radio – Pop/Rock"
+      }
+      {
+        id: "PLKR0ZRenRrdzhW0pzppxVV1r3lnpN-7Ml", // sostituisci
+        name: "AI Radio – Best of"
+      },
+      {
+        id: "PLKR0ZRenRrdw9_2GLQFNwDHf3vLrLfc2N", // sostituisci
+        name: "AI Radio – Funny"
+      }
+    ];
 
     let player = null;
     let isReady = false;
     let isPlaying = false;
+    let currentPlaylistId = PLAYLISTS[0].id;
 
     const playBtn = document.getElementById("play-btn");
     const prevBtn = document.getElementById("prev-btn");
@@ -517,6 +578,8 @@
     const statusDotEl = document.getElementById("status-dot");
     const statusTextEl = document.getElementById("status-text");
     const hintTextEl = document.getElementById("hint-text");
+    const playlistLabelEl = document.getElementById("playlist-label");
+    const playlistSelect = document.getElementById("playlist-select");
 
     function setControlsEnabled(enabled) {
       playBtn.disabled = !enabled;
@@ -588,6 +651,26 @@
       }
     }
 
+    // Cambio playlist
+    function changePlaylist(newPlaylistId) {
+      currentPlaylistId = newPlaylistId;
+
+      const selectedOption = playlistSelect.options[playlistSelect.selectedIndex];
+      playlistLabelEl.textContent = selectedOption ? selectedOption.textContent : "Playlist AI Radio";
+
+      trackTitleEl.textContent = "Caricamento della playlist...";
+      trackPositionEl.textContent = "Traccia - / -";
+      setStatus("Cambio playlist…", false);
+
+      if (player && isReady) {
+        player.loadPlaylist({
+          listType: "playlist",
+          list: currentPlaylistId,
+          index: 0
+        });
+      }
+    }
+
     // YouTube API callback
     function onYouTubeIframeAPIReady() {
       player = new YT.Player("player", {
@@ -595,7 +678,7 @@
         width: "0",
         playerVars: {
           listType: "playlist",
-          list: YT_PLAYLIST_ID,
+          list: currentPlaylistId,
           autoplay: 0,
           controls: 0,
           rel: 0,
@@ -615,7 +698,6 @@
       setStatus("Pronto • premi Play per avviare", false);
       updateTrackInfo();
 
-      // Imposta volume iniziale
       const vol = parseInt(volumeSlider.value, 10) || 70;
       player.setVolume(vol);
     }
@@ -627,7 +709,6 @@
       } else if (event.data === YT.PlayerState.PAUSED) {
         updatePlayPauseUI(false);
       } else if (event.data === YT.PlayerState.ENDED) {
-        // In modalità playlist, YouTube passa automaticamente alla successiva
         setStatus("Passo alla prossima traccia…", false);
       } else if (event.data === YT.PlayerState.BUFFERING) {
         setStatus("Buffering…", isPlaying);
@@ -685,9 +766,27 @@
       }
     }
 
-    // Event listeners
+    // Init UI + event listeners
     document.addEventListener("DOMContentLoaded", () => {
       setControlsEnabled(false);
+
+      // Popola il select con le playlist
+      PLAYLISTS.forEach((pl, index) => {
+        const opt = document.createElement("option");
+        opt.value = pl.id;
+        opt.textContent = pl.name;
+        if (index === 0) opt.selected = true;
+        playlistSelect.appendChild(opt);
+      });
+
+      // Label iniziale
+      if (playlistSelect.options.length > 0) {
+        playlistLabelEl.textContent = playlistSelect.options[playlistSelect.selectedIndex].textContent;
+      }
+
+      playlistSelect.addEventListener("change", (e) => {
+        changePlaylist(e.target.value);
+      });
 
       playBtn.addEventListener("click", togglePlayPause);
       nextBtn.addEventListener("click", nextTrack);
