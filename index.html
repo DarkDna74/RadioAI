@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Radio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Font opzionale -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-accent: #0b1020;
+      --card: #111827;
+      --primary: #6366f1;
+      --primary-soft: rgba(99, 102, 241, 0.16);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --radius-xl: 1.8rem;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 40%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      padding: 1.8rem 1.6rem 1.6rem;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.1), transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(244, 114, 182, 0.12), transparent 55%),
+        radial-gradient(circle at 50% 120%, rgba(129, 140, 248, 0.15), transparent 55%);
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 1.1rem;
+      background: radial-gradient(circle at 30% 20%, #f97316, #6366f1 45%, #0ea5e9 90%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.7), 0 18px 35px rgba(15, 23, 42, 0.9);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-logo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 10% 0, rgba(255, 255, 255, 0.35), transparent 36%);
+      opacity: 0.9;
+    }
+
+    .brand-logo span {
+      position: relative;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #f9fafb;
+      text-shadow: 0 1px 2px rgba(15, 23, 42, 0.6);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .brand-text h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .brand-text span {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .ai-pill {
+      font-size: 0.7rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .ai-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+    }
+
+    .player-card {
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 1.4rem;
+      padding: 1.1rem 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      backdrop-filter: blur(16px);
+      margin-bottom: 1rem;
+    }
+
+    .track-info {
+      margin-bottom: 0.9rem;
+    }
+
+    .track-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .track-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.3;
+      max-height: 2.6em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.3rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .track-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .track-meta span::before {
+      content: "•";
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+
+    .track-meta span:first-child::before {
+      content: "";
+      margin-right: 0;
+    }
+
+    /* Controls */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.9rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .controls-main {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    button {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+      background: none;
+    }
+
+    .btn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 0, rgba(148, 163, 184, 0.25), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.8);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+    }
+
+    .btn-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-icon.small {
+      width: 32px;
+      height: 32px;
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.7);
+    }
+
+    .btn-icon.primary {
+      background: radial-gradient(circle at 0 0, rgba(248, 250, 252, 0.3), rgba(99, 102, 241, 0.95));
+      border-color: rgba(191, 219, 254, 0.8);
+    }
+
+    .btn-icon:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 7px 14px rgba(15, 23, 42, 0.85);
+    }
+
+    .btn-icon:disabled {
+      opacity: 0.45;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .volume-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.7rem;
+    }
+
+    .volume-row span {
+      font-size: 0.78rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .volume-slider {
+      flex: 1;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(55, 65, 81, 0.9);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.35);
+      margin-top: -5px;
+    }
+
+    .volume-slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.35);
+    }
+
+    .volume-slider::-moz-range-track {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(55, 65, 81, 0.9);
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+
+    .status-pill {
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.29rem;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #9ca3af;
+    }
+
+    .status-dot.playing {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+    }
+
+    .footer-note {
+      margin-top: 0.9rem;
+      font-size: 0.7rem;
+      color: var(--muted);
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .footer-note strong {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* Player (nascosto ma presente per YouTube) */
+    #player-container {
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding: 1.5rem 1.2rem 1.3rem;
+        border-radius: 1.5rem;
+      }
+
+      .brand-text h1 {
+        font-size: 1.05rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="app-inner">
+      <header class="header">
+        <div class="brand">
+          <div class="brand-logo">
+            <span>AI</span>
+          </div>
+          <div class="brand-text">
+            <h1>AI Radio</h1>
+            <span>Generative vibes • YouTube playlist</span>
+          </div>
+        </div>
+        <div class="ai-pill">
+          <span class="ai-dot"></span>
+          <span>Live Mode</span>
+        </div>
+      </header>
+
+      <section class="player-card">
+        <div class="track-info">
+          <div class="track-label">In riproduzione</div>
+          <div id="track-title" class="track-title">
+            Caricamento della playlist...
+          </div>
+          <div class="track-meta">
+            <span id="track-position">Traccia - / -</span>
+            <span id="playlist-label">Playlist AI Radio</span>
+          </div>
+        </div>
+
+        <div class="controls-row">
+          <div class="controls-main">
+            <button id="prev-btn" class="btn-icon small" title="Traccia precedente" disabled>
+              <!-- Prev icon -->
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor"
+                      d="M6 5a1 1 0 0 0-1 1v12a1 1 0 1 0 2 0V6a1 1 0 0 0-1-1zm3.9 7.62 7.14 4.26A1 1 0 0 0 19 16.99V7.01a1 1 0 0 0-1.96-.89L9.9 10.38a1.42 1.42 0 0 0 0 2.24z" />
+              </svg>
+            </button>
+
+            <button id="play-btn" class="btn-icon primary" title="Play/Pausa" disabled>
+              <!-- Play/Pause icon -->
+              <svg id="play-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor"
+                      d="M8 5.14v13.72a1 1 0 0 0 1.52.85l9-6.86a1 1 0 0 0 0-1.7l-9-6.86A1 1 0 0 0 8 5.14z" />
+              </svg>
+              <svg id="pause-icon" viewBox="0 0 24 24" aria-hidden="true" style="display:none">
+                <path fill="currentColor"
+                      d="M8 5a1 1 0 0 0-1 1v12a1 1 0 0 0 2 0V6a1 1 0 0 0-1-1zm8 0a1 1 0 0 0-1 1v12a1 1 0 0 0 2 0V6a1 1 0 0 0-1-1z" />
+              </svg>
+            </button>
+
+            <button id="next-btn" class="btn-icon small" title="Traccia successiva" disabled>
+              <!-- Next icon -->
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor"
+                      d="M18 19a1 1 0 0 0 1-1V6a1 1 0 1 0-2 0v12a1 1 0 0 0 1 1zm-3.9-6.62-7.14-4.26A1 1 0 0 0 5 7.01v9.98a1 1 0 0 0 1.96.89l7.14-4.26a1.42 1.42 0 0 0 0-2.24z" />
+              </svg>
+            </button>
+          </div>
+
+          <button id="mute-btn" class="btn-icon small" title="Muto" disabled>
+            <!-- Volume icon -->
+            <svg id="volume-on-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor"
+                    d="M5 9v6a1 1 0 0 0 1 1h2.76l4.32 3.24A1 1 0 0 0 15 18.4V5.6a1 1 0 0 0-1.92-.84L8.76 8H6a1 1 0 0 0-1 1z" />
+              <path fill="currentColor"
+                    d="M17.66 8.34a1 1 0 0 0-1.41 1.41A3 3 0 0 1 17 12a3 3 0 0 1-.75 2 1 1 0 1 0 1.57 1.25A5.05 5.05 0 0 0 19 12a5.05 5.05 0 0 0-1.34-3.41z" />
+            </svg>
+            <svg id="volume-off-icon" viewBox="0 0 24 24" aria-hidden="true" style="display:none">
+              <path fill="currentColor"
+                    d="M7.05 4.64A1 1 0 1 0 5.64 6.05L7.59 8H6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.76l4.32 3.24A1 1 0 0 0 15 18.4v-4.73l2.95 2.96a1 1 0 0 0 1.41-1.41zM13 7.6v3.12l-2.58-2.58z" />
+              <path fill="currentColor"
+                    d="M16.55 4.23A1 1 0 0 0 15 5.05V5.6a1 1 0 0 0 .45.84A7.1 7.1 0 0 1 19 12a7 7 0 0 1-1 3.6 1 1 0 0 0 1.72 1A9.07 9.07 0 0 0 21 12a9.1 9.1 0 0 0-4-7.37z" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="volume-row">
+          <span>Volume</span>
+          <input id="volume-slider" class="volume-slider" type="range" min="0" max="100" value="70" />
+        </div>
+
+        <div class="status-row">
+          <div class="status-pill">
+            <span id="status-dot" class="status-dot"></span>
+            <span id="status-text">Inizializzazione player...</span>
+          </div>
+          <span id="hint-text">Suggerimento: premi Play per avviare la radio</span>
+        </div>
+      </section>
+
+      <p class="footer-note">
+        Alimentata da <strong>YouTube</strong> • Interfaccia by <strong>AI Radio</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Contenitore per l'iframe di YouTube (nascosto) -->
+  <div id="player-container">
+    <div id="player"></div>
+  </div>
+
+  <!-- API YouTube IFrame -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    // 🔧 Configura qui la tua playlist
+    const YT_PLAYLIST_ID = "https://www.youtube.com/watch?v=LHbf5KfqttI&list=PLKR0ZRenRrdzHodMKBL46T7xtbuT6MSrX";
+
+    let player = null;
+    let isReady = false;
+    let isPlaying = false;
+
+    const playBtn = document.getElementById("play-btn");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const muteBtn = document.getElementById("mute-btn");
+    const volumeSlider = document.getElementById("volume-slider");
+
+    const playIcon = document.getElementById("play-icon");
+    const pauseIcon = document.getElementById("pause-icon");
+    const volumeOnIcon = document.getElementById("volume-on-icon");
+    const volumeOffIcon = document.getElementById("volume-off-icon");
+
+    const trackTitleEl = document.getElementById("track-title");
+    const trackPositionEl = document.getElementById("track-position");
+    const statusDotEl = document.getElementById("status-dot");
+    const statusTextEl = document.getElementById("status-text");
+    const hintTextEl = document.getElementById("hint-text");
+
+    function setControlsEnabled(enabled) {
+      playBtn.disabled = !enabled;
+      prevBtn.disabled = !enabled;
+      nextBtn.disabled = !enabled;
+      muteBtn.disabled = !enabled;
+      volumeSlider.disabled = !enabled;
+    }
+
+    function setStatus(text, isNowPlaying) {
+      statusTextEl.textContent = text;
+      if (typeof isNowPlaying === "boolean") {
+        if (isNowPlaying) {
+          statusDotEl.classList.add("playing");
+        } else {
+          statusDotEl.classList.remove("playing");
+        }
+      }
+    }
+
+    function updateTrackInfo() {
+      if (!player || !isReady) return;
+      const data = player.getVideoData();
+      const title = data && data.title ? data.title : "Traccia sconosciuta";
+
+      const index = typeof player.getPlaylistIndex === "function"
+        ? player.getPlaylistIndex()
+        : -1;
+
+      const playlist = typeof player.getPlaylist === "function"
+        ? player.getPlaylist()
+        : null;
+
+      const total = Array.isArray(playlist) ? playlist.length : null;
+
+      trackTitleEl.textContent = title;
+      if (index >= 0 && total) {
+        trackPositionEl.textContent = `Traccia ${index + 1} / ${total}`;
+      } else {
+        trackPositionEl.textContent = "Traccia - / -";
+      }
+    }
+
+    function updatePlayPauseUI(isNowPlaying) {
+      isPlaying = isNowPlaying;
+      if (isNowPlaying) {
+        playIcon.style.display = "none";
+        pauseIcon.style.display = "block";
+        setStatus("In riproduzione", true);
+        hintTextEl.textContent = "Suggerimento: usa Next/Prev per cambiare brano";
+      } else {
+        playIcon.style.display = "block";
+        pauseIcon.style.display = "none";
+        setStatus("In pausa", false);
+        hintTextEl.textContent = "Premi Play per continuare la radio";
+      }
+    }
+
+    function updateMuteUI() {
+      if (!player) return;
+      const muted = player.isMuted();
+      if (muted) {
+        volumeOnIcon.style.display = "none";
+        volumeOffIcon.style.display = "block";
+        hintTextEl.textContent = "Radio silenziata • Clicca di nuovo per attivare l'audio";
+      } else {
+        volumeOnIcon.style.display = "block";
+        volumeOffIcon.style.display = "none";
+      }
+    }
+
+    // YouTube API callback
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player("player", {
+        height: "0",
+        width: "0",
+        playerVars: {
+          listType: "playlist",
+          list: YT_PLAYLIST_ID,
+          autoplay: 0,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1
+        },
+        events: {
+          onReady: onPlayerReady,
+          onStateChange: onPlayerStateChange,
+          onError: onPlayerError
+        }
+      });
+    }
+
+    function onPlayerReady() {
+      isReady = true;
+      setControlsEnabled(true);
+      setStatus("Pronto • premi Play per avviare", false);
+      updateTrackInfo();
+
+      // Imposta volume iniziale
+      const vol = parseInt(volumeSlider.value, 10) || 70;
+      player.setVolume(vol);
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        updateTrackInfo();
+        updatePlayPauseUI(true);
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        updatePlayPauseUI(false);
+      } else if (event.data === YT.PlayerState.ENDED) {
+        // In modalità playlist, YouTube passa automaticamente alla successiva
+        setStatus("Passo alla prossima traccia…", false);
+      } else if (event.data === YT.PlayerState.BUFFERING) {
+        setStatus("Buffering…", isPlaying);
+      }
+    }
+
+    function onPlayerError(event) {
+      console.error("YouTube Player error:", event.data);
+      setStatus("Errore di riproduzione", false);
+      hintTextEl.textContent = "Controlla la playlist o ricarica la pagina.";
+      trackTitleEl.textContent = "Impossibile riprodurre questa playlist.";
+    }
+
+    // Controlli
+    function togglePlayPause() {
+      if (!player || !isReady) return;
+      const state = player.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
+    }
+
+    function nextTrack() {
+      if (!player || !isReady) return;
+      player.nextVideo();
+      setStatus("Caricamento prossima traccia…", false);
+    }
+
+    function prevTrack() {
+      if (!player || !isReady) return;
+      player.previousVideo();
+      setStatus("Caricamento traccia precedente…", false);
+    }
+
+    function toggleMute() {
+      if (!player || !isReady) return;
+      if (player.isMuted()) {
+        player.unMute();
+      } else {
+        player.mute();
+      }
+      updateMuteUI();
+    }
+
+    function changeVolume(value) {
+      if (!player || !isReady) return;
+      const vol = parseInt(value, 10);
+      if (Number.isNaN(vol)) return;
+      player.setVolume(vol);
+      if (player.isMuted() && vol > 0) {
+        player.unMute();
+        updateMuteUI();
+      }
+    }
+
+    // Event listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      setControlsEnabled(false);
+
+      playBtn.addEventListener("click", togglePlayPause);
+      nextBtn.addEventListener("click", nextTrack);
+      prevBtn.addEventListener("click", prevTrack);
+      muteBtn.addEventListener("click", toggleMute);
+
+      volumeSlider.addEventListener("input", (e) => {
+        changeVolume(e.target.value);
+      });
+    });
+  </script>
+</body>
+</html>
