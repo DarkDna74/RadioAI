@@ -526,7 +526,7 @@
   </div>
 
   <!-- API YouTube IFrame -->
-  <script src="https://www.youtube.com/iframe_api"></script>
+ <script src="https://www.youtube.com/iframe_api"></script>
 <script>
   // 🔧 LE TUE PLAYLIST
   const PLAYLISTS = [
@@ -556,6 +556,7 @@
   let isReady = false;
   let isPlaying = false;
   let currentPlaylistId = PLAYLISTS[0].id;
+  let pendingPlaylistChange = false; // 👈 serve per avviare la nuova playlist quando è pronta
 
   const playBtn = document.getElementById("play-btn");
   const prevBtn = document.getElementById("prev-btn");
@@ -576,7 +577,7 @@
   const playlistLabelEl = document.getElementById("playlist-label");
   const playlistSelect = document.getElementById("playlist-select");
 
-  // 🔤 PULISCE IL TITOLO: taglia tutto dopo il primo "#"
+  // 🔤 Pulisce il titolo: taglia tutto dopo il primo "#"
   function cleanTitle(raw) {
     if (!raw) return "";
     const hashIndex = raw.indexOf("#");
@@ -609,7 +610,7 @@
     if (!player || !isReady) return;
     const data = player.getVideoData();
     const rawTitle = data && data.title ? data.title : "Traccia sconosciuta";
-    const title = cleanTitle(rawTitle); // 👈 qui usiamo il titolo pulito
+    const title = cleanTitle(rawTitle);
 
     const index = typeof player.getPlaylistIndex === "function"
       ? player.getPlaylistIndex()
@@ -657,7 +658,7 @@
     }
   }
 
-  // Cambio playlist – forcella sempre sulla nuova, dalla traccia 0
+  // Cambio playlist – carica la nuova e aspetta lo stato CUED per avviare
   function changePlaylist(newPlaylistId) {
     currentPlaylistId = newPlaylistId;
 
@@ -673,17 +674,13 @@
         if (typeof player.setShuffle === "function") player.setShuffle(false);
         if (typeof player.setLoop === "function") player.setLoop(true);
 
+        pendingPlaylistChange = true; // 👈 appena la nuova playlist è CUED, la facciamo partire
+
         player.loadPlaylist({
           listType: "playlist",
           list: currentPlaylistId,
           index: 0
         });
-
-        if (typeof player.playVideoAt === "function") {
-          player.playVideoAt(0); // 👈 parte subito dalla prima traccia della nuova playlist
-        }
-
-        setStatus("Playlist caricata…", false);
       } catch (e) {
         console.error("Errore cambio playlist:", e);
         setStatus("Errore nel cambio playlist", false);
@@ -699,7 +696,7 @@
       playerVars: {
         listType: "playlist",
         list: currentPlaylistId,
-        autoplay: 1,   // 👈 chiediamo subito autoplay
+        autoplay: 1,   // chiediamo autoplay sulla prima playlist
         controls: 0,
         rel: 0,
         modestbranding: 1
@@ -722,7 +719,7 @@
     const vol = parseInt(volumeSlider.value, 10) || 70;
     player.setVolume(vol);
 
-    // ▶️ AUTOPLAY APPENA LA PAGINA È PRONTA
+    // Prova ad avviare subito la radio (autoplay)
     setStatus("Avvio radio…", false);
     try {
       player.playVideo();
@@ -735,6 +732,17 @@
   }
 
   function onPlayerStateChange(event) {
+    // Quando una playlist nuova viene CUED dopo un cambio, la facciamo partire da sola
+    if (event.data === YT.PlayerState.CUED && pendingPlaylistChange) {
+      pendingPlaylistChange = false;
+      try {
+        player.playVideo();
+      } catch (e) {
+        console.error("Impossibile avviare la nuova playlist:", e);
+      }
+      return;
+    }
+
     if (event.data === YT.PlayerState.PLAYING) {
       updateTrackInfo();
       updatePlayPauseUI(true);
@@ -830,6 +838,7 @@
     });
   });
 </script>
+
 
 </body>
 </html>
